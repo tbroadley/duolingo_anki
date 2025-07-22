@@ -6,5 +6,7 @@
 1. Use a Vim macro to remove everything from `duolingo_audio_file_links.txt` except the file URLs
 1. `python combine_vocabulary_and_audio_file_links.py`
 1. `python download_audio_files.py`
-1. `cp audio_files/* "/mnt/c/Users/burie/AppData/Roaming/Anki2/User 1/collection.media"`
+1. `cp audio_files/* "/mnt/c/Users/burie/AppData/Roaming/Anki2/User 1/collection.media"` (TODO this only works on my computer)
 1. `python add_audio_file_references.py`
+
+This creates a `duolingo_vocabulary_final.csv` file that you can load into Anki :tada:

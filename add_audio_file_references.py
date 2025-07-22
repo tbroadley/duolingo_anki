@@ -66,11 +66,6 @@ def convert_csv_to_anki_format(input_csv, output_csv):
                 print("Error: Could not find 'audio_file_link' column in CSV")
                 return
             
-            # Replace column name in header
-            new_header = header.copy()
-            new_header[audio_link_index] = 'audio_file_reference'
-            csv_writer.writerow(new_header)
-            
             processed_rows = 0
             converted_count = 0
             empty_count = 0

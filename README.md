@@ -1,3 +1,7 @@
+# `duolingo_anki`
+
+ Scripts to download Duolingo vocabulary and audio files, then format them as an Anki deck.
+
 1. Go to https://www.duolingo.com/practice-hub/words
 1. Run `download_duolingo_vocabulary.js` in the console
 1. Get the value of the variable `result` from the console and paste it into `duolingo_vocabulary.csv`
@@ -10,3 +14,7 @@
 1. `python add_audio_file_references.py`
 
 This creates a `duolingo_vocabulary_final.csv` file that you can load into Anki :tada:
+
+## Credits
+
+Thank you Claude for writing 99% of the code.

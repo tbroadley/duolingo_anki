@@ -1,4 +1,5 @@
-/audio_files/*
-/*.har
 /*.csv
+/*.har
+/audio_files/*
+/curl.txt
 /duolingo_audio_file_links.txt

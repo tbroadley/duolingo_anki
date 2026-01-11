@@ -5,6 +5,7 @@ This script replaces the manual browser-based workflow.
 """
 
 import csv
+import gzip
 import json
 import os
 import re
@@ -63,9 +64,9 @@ def extract_base_url_and_params(url):
     # Extract user ID and languages from path
     # Path format: /2017-06-30/users/{user_id}/courses/{learning_lang}/{from_lang}/learned-lexemes
     path_parts = parsed.path.split('/')
-    user_id = path_parts[4]
-    learning_lang = path_parts[6]
-    from_lang = path_parts[7]
+    user_id = path_parts[3]
+    learning_lang = path_parts[5]
+    from_lang = path_parts[6]
 
     base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
 
@@ -96,10 +97,19 @@ def fetch_lexemes(base_url, headers, post_data, start_index=0, limit=50):
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             response_data = response.read()
+
+            # Check if response is gzip-compressed
+            if response_data[:2] == b'\x1f\x8b':  # gzip magic number
+                response_data = gzip.decompress(response_data)
+
             return json.loads(response_data)
     except urllib.error.HTTPError as e:
         print(f"  HTTP Error {e.code}: {e.reason}")
-        print(f"  Response: {e.read().decode('utf-8')}")
+        error_data = e.read()
+        # Try to decompress if gzipped
+        if error_data[:2] == b'\x1f\x8b':
+            error_data = gzip.decompress(error_data)
+        print(f"  Response: {error_data.decode('utf-8')}")
         raise
     except Exception as e:
         print(f"  Error: {e}")
@@ -122,14 +132,16 @@ def fetch_all_lexemes(base_url, headers, post_data, limit=50):
 
         # Extract lexemes from response
         # The actual structure might vary - adjust based on the API response
-        if 'lexemes' in response:
+        if 'learnedLexemes' in response:
+            lexemes = response['learnedLexemes']
+        elif 'lexemes' in response:
             lexemes = response['lexemes']
         elif 'results' in response:
             lexemes = response['results']
         else:
             # If we don't know the structure, print it
             print(f"  Response keys: {list(response.keys())}")
-            lexemes = response.get('lexemes', response.get('results', []))
+            lexemes = response.get('learnedLexemes', response.get('lexemes', response.get('results', [])))
 
         if not lexemes:
             print(f"  No more lexemes found")
@@ -156,20 +168,15 @@ def extract_lexeme_data(lexeme):
     Returns:
         dict: Extracted data (word, translation, audio_url)
     """
-    # These field names are guesses - adjust based on actual API response
-    word = lexeme.get('lexeme', {}).get('word', '') or lexeme.get('word', '') or lexeme.get('learningWord', '')
-    translation = lexeme.get('lexeme', {}).get('translation', '') or lexeme.get('translation', '') or lexeme.get('translations', [''])[0]
+    # Extract from the actual API structure
+    word = lexeme.get('text', '')
 
-    # Audio URL might be nested
-    audio_url = ''
-    if 'lexeme' in lexeme and 'audio' in lexeme['lexeme']:
-        audio_url = lexeme['lexeme']['audio']
-    elif 'audio' in lexeme:
-        audio_url = lexeme['audio']
-    elif 'tts' in lexeme:
-        audio_url = lexeme['tts']
-    elif 'lexeme' in lexeme and 'tts' in lexeme['lexeme']:
-        audio_url = lexeme['lexeme']['tts']
+    # Get first translation from the translations array
+    translations = lexeme.get('translations', [])
+    translation = translations[0] if translations else ''
+
+    # Get audio URL
+    audio_url = lexeme.get('audioURL', '')
 
     return {
         'word': word,
